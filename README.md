@@ -20,6 +20,54 @@ Custom ext_pillar modules (`_pillar/`), tested against Salt 3008.2, alongside a 
 
 `sql/schema.sql` creates a `pillar_data(target, priority, data jsonb)` table. Rows with `target = 'default'` apply to every minion, and rows with `target = <minion_id>` apply to that minion. The configured query returns defaults first and then per-minion rows by priority, and they are deep-merged in that order. Any query works as long as it returns one JSON object column.
 
+## Pillar API server (`api/pillar_api.py`)
+
+A small HTTP server that `http_pillar` can query. It uses only the standard library, plus psycopg2 for the Postgres backend and PyYAML for YAML files. It serves pillar data from one of two backends:
+
+```bash
+# From a YAML/JSON dict: {default: {...}, <minion_id>: {...}}. The file is re-read when it changes.
+python api/pillar_api.py dict api/example_pillars.yaml
+
+# From the pillar_data table. Any libpq conninfo or postgresql:// URI works; the password comes from PGPASSWORD or ~/.pgpass.
+python api/pillar_api.py postgres "host=pg.example.com dbname=salt user=salt_pillar sslmode=verify-full"
+```
+
+Common options are `--host`, `--port` (default 8088), `--token-file` (or the `PILLAR_API_TOKEN` env var, which makes the server require `Authorization: Bearer <token>`), and `--tls-cert` with `--tls-key`. The Postgres backend also takes `--query` and `--pool-size`.
+
+| Endpoint | Response |
+|---|---|
+| `GET /pillar/<minion_id>` | The `default` entry deep-merged with the minion's own entry. 404 if neither exists. |
+| `POST /lookup` `{"id": "<minion_id>"}` | Same data, for `method: POST` with `json_body: {id: "{minion_id}"}`. |
+| `GET /healthz` | 200, or 503 when the backend is down. No auth, so it can be used for load balancer checks. |
+
+Merging: nested dicts are merged recursively, and lists and scalar values from the minion's entry replace the default. Because of the `default` entry, every minion gets at least the defaults. If a backend error occurs, the server returns 503, and `http_pillar` fails closed.
+
+Matching `ext_pillar` entry:
+
+```yaml
+ext_pillar:
+  - http_pillar:
+      url: https://pillar-api.example.com:8088/pillar/{minion_id}
+      bearer_token_file: /etc/salt/secrets/pillar-api.token
+      ca_bundle: /etc/salt/pki/pillar-api-ca.pem
+```
+
+## Testing
+
+The tests replace the database and HTTP calls with fakes, and run the API server in-process on a random port. They don't need a real database, API or salt-master.
+
+```bash
+.venv/bin/pytest -q tests                                     # all tests
+.venv/bin/pytest -q tests/test_pg_pillar.py::test_rows_merged_in_order   # a single test
+```
+
+Coverage uses `pytest-cov` (`.venv/bin/pip install pytest-cov`):
+
+```bash
+.venv/bin/pytest -q --cov=_pillar --cov=api --cov-report=term-missing tests
+.venv/bin/pytest -q --cov=_pillar --cov=api --cov-report=html tests    # then open htmlcov/index.html
+```
+
 ## Deploying to a master
 
 1. Install the DB driver into the master's Python: `salt-pip install psycopg2-binary`. `requests` is already bundled.

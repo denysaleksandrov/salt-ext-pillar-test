@@ -1,0 +1,16 @@
+# Pillar data for `python api/pillar_api.py dict api/example_pillars.yaml`.
+# `default` applies to every minion; a minion's own entry is deep-merged on top.
+default:
+  datacenter: ams1
+  app:
+    replicas: 2
+
+minion1:
+  app:
+    version: 1.4.2
+    replicas: 3
+
+minion2:
+  datacenter: fra1
+  app:
+    version: 2.0.0

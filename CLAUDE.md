@@ -17,7 +17,7 @@ This repo holds custom Salt external pillar modules that read pillar data from P
 - Unit tests: `.venv/bin/pytest -q tests`
 - Single test: `.venv/bin/pytest -q tests/test_pg_pillar.py::test_rows_merged_in_order`
 - Local Postgres: `dev/pg.sh up|seed|psql|down` (podman, 127.0.0.1:55432, loads `sql/`)
-- Mock API: `.venv/bin/python dev/mock_api.py --token devtoken` (127.0.0.1:8088)
+- Pillar API server: `PILLAR_API_TOKEN=devtoken .venv/bin/python api/pillar_api.py dict api/example_pillars.yaml` or `... postgres "<conninfo>"` (127.0.0.1:8088)
 - Masterless end-to-end: `dev/run-local.sh baseline|custom <minion_id>`. It generates a config under `dev/.run/` and runs `salt-call --local pillar.items`.
 - The user plans to validate against a real PG database and a real Salt environment. Don't start the podman or end-to-end flows unless asked.
 
@@ -28,5 +28,6 @@ This repo holds custom Salt external pillar modules that read pillar data from P
 - Salt's loader re-executes pillar modules for every pillar compile (it builds a new `LazyLoader` per `Pillar`), so module globals don't persist. `pg_pillar` keeps its connection cache in a `sys.modules["_salt_pg_pillar_connections"]` holder, keyed by profile and reset after fork. Don't move it back to a module-level dict.
 - Neither module does grain-based lookups, on purpose, because minions can spoof their grains. The only key is `minion_id`: a bind parameter in SQL and url-quoted in HTTP.
 - `pg_pillar` connection settings live in master opts under `pg_pillar.profiles.<name>`. Anything not in `_OWN_OPTIONS` goes straight to `psycopg2.connect`. Rows are merged with `salt.utils.dictupdate.merge`, using the master's `pillar_source_merging_strategy` and `pillar_merge_lists`.
+- `api/pillar_api.py` is a standalone server and must not import salt, because it runs off the master. Its URL layout and 404/503 semantics are the contract `http_pillar` relies on: 404 → `{}` (with `not_found_ok`), anything else → error. The dict backend and the Postgres backend (same `pillar_data` table and `default` target as `pg_pillar`) share `deep_merge`. `tests/test_pillar_api.py` runs it in a thread on port 0, including an end-to-end check with `http_pillar`.
 - Tests load modules with `tests/conftest.py:load_module`, which runs them outside the loader and injects `__opts__`. Mock `psycopg2.connect` and `requests.request`.
 - Config: `config/master.d/` holds production-shaped master snippets, and `dev/local/` holds matching local variants for `run-local.sh`. `pillar_dirs` in opts is how the local run finds `_pillar/`.

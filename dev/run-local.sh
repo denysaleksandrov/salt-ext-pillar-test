@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Compile pillar masterless with salt-call --local (no salt-master needed).
 #   dev/run-local.sh baseline|custom <minion_id> [extra salt-call args]
-# Needs: dev/pg.sh up, and for `custom` also `python dev/mock_api.py --token devtoken`.
+# Needs: dev/pg.sh up, and for `custom` also
+#   PILLAR_API_TOKEN=devtoken python api/pillar_api.py dict api/example_pillars.yaml
 set -euo pipefail
 
 MODE=${1:?usage: $0 baseline|custom <minion_id>}

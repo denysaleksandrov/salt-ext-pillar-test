@@ -52,6 +52,23 @@ ext_pillar:
       ca_bundle: /etc/salt/pki/pillar-api-ca.pem
 ```
 
+## Development setup
+
+Create the venv from pyenv's Python 3.13.2 (not the system python):
+
+```bash
+$(pyenv root)/versions/3.13.2/bin/python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+```
+
+`requirements.txt` pins the local dev and test tools. The salt-master itself only needs psycopg2 (see [Deploying to a master](#deploying-to-a-master)).
+
+Format code with Black:
+
+```bash
+.venv/bin/black --exclude '/(\.venv|\.git|dev/\.run)/' .
+```
+
 ## Testing
 
 The tests replace the database and HTTP calls with fakes, and run the API server in-process on a random port. They don't need a real database, API or salt-master.
@@ -61,7 +78,7 @@ The tests replace the database and HTTP calls with fakes, and run the API server
 .venv/bin/pytest -q tests/test_pg_pillar.py::test_rows_merged_in_order   # a single test
 ```
 
-Coverage uses `pytest-cov` (`.venv/bin/pip install pytest-cov`):
+Coverage (`pytest-cov` is in `requirements.txt`):
 
 ```bash
 .venv/bin/pytest -q --cov=_pillar --cov=api --cov-report=term-missing tests

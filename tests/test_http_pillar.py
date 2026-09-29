@@ -22,8 +22,12 @@ def response(status=200, body=None):
 
 
 def test_get_with_namespace(http):
-    with mock.patch.object(http.requests, "request", return_value=response(body={"a": 1})) as req:
-        assert http.ext_pillar("minion1", {}, url=URL, namespace="cmdb") == {"cmdb": {"a": 1}}
+    with mock.patch.object(
+        http.requests, "request", return_value=response(body={"a": 1})
+    ) as req:
+        assert http.ext_pillar("minion1", {}, url=URL, namespace="cmdb") == {
+            "cmdb": {"a": 1}
+        }
     method, url = req.call_args.args
     assert (method, url) == ("GET", "https://api.example.com/pillar/minion1")
     assert req.call_args.kwargs["verify"] is True
@@ -89,6 +93,8 @@ def test_fail_closed_and_fail_open(http):
 
 
 def test_non_object_json_rejected(http):
-    with mock.patch.object(http.requests, "request", return_value=response(body=[1, 2])):
+    with mock.patch.object(
+        http.requests, "request", return_value=response(body=[1, 2])
+    ):
         with pytest.raises(http.HttpPillarError, match="JSON object"):
             http.ext_pillar("m", {}, url=URL)

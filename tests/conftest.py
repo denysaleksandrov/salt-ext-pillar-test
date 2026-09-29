@@ -15,7 +15,9 @@ DEFAULT_OPTS = {
 
 def load_module(name, opts):
     """Import a _pillar module outside the Salt loader and inject dunders."""
-    spec = importlib.util.spec_from_file_location(f"test_{name}", PILLAR_DIR / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(
+        f"test_{name}", PILLAR_DIR / f"{name}.py"
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     module.__opts__ = {**DEFAULT_OPTS, **opts}

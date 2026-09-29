@@ -224,7 +224,9 @@ class PillarHandler(BaseHTTPRequestHandler):
         self._serve_pillar(minion_id if isinstance(minion_id, str) else None)
 
 
-def make_server(backend, host="127.0.0.1", port=8088, token=None, tls_cert=None, tls_key=None):
+def make_server(
+    backend, host="127.0.0.1", port=8088, token=None, tls_cert=None, tls_key=None
+):
     handler = type("Handler", (PillarHandler,), {"backend": backend, "token": token})
     server = ThreadingHTTPServer((host, port), handler)
     if tls_cert:
@@ -241,20 +243,27 @@ def parse_args(argv=None):
     dict_p.add_argument("path")
     pg_p = sub.add_parser("postgres", help="serve from the pillar_data table")
     pg_p.add_argument("dsn", help="libpq conninfo string or postgresql:// URI")
-    pg_p.add_argument("--query", default=DEFAULT_QUERY,
-                      help="SQL with %%(minion_id)s and %%(default)s placeholders")
+    pg_p.add_argument(
+        "--query",
+        default=DEFAULT_QUERY,
+        help="SQL with %%(minion_id)s and %%(default)s placeholders",
+    )
     pg_p.add_argument("--pool-size", type=int, default=5)
     for sub_p in (dict_p, pg_p):
         sub_p.add_argument("--host", default="127.0.0.1")
         sub_p.add_argument("--port", type=int, default=8088)
-        sub_p.add_argument("--token-file", help="require 'Authorization: Bearer <token>'")
+        sub_p.add_argument(
+            "--token-file", help="require 'Authorization: Bearer <token>'"
+        )
         sub_p.add_argument("--tls-cert")
         sub_p.add_argument("--tls-key")
     return parser.parse_args(argv)
 
 
 def main(argv=None):
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     args = parse_args(argv)
 
     if args.backend == "dict":
@@ -269,9 +278,13 @@ def main(argv=None):
     if not token:
         log.warning("no token configured: the API is unauthenticated")
 
-    server = make_server(backend, args.host, args.port, token, args.tls_cert, args.tls_key)
+    server = make_server(
+        backend, args.host, args.port, token, args.tls_cert, args.tls_key
+    )
     scheme = "https" if args.tls_cert else "http"
-    log.info("serving %s backend on %s://%s:%d", args.backend, scheme, args.host, args.port)
+    log.info(
+        "serving %s backend on %s://%s:%d", args.backend, scheme, args.host, args.port
+    )
     try:
         server.serve_forever()
     except KeyboardInterrupt:

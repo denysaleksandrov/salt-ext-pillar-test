@@ -8,7 +8,8 @@ This repo holds custom Salt external pillar modules that read pillar data from P
 
 ## Environment
 
-- Use the project venv `.venv`, built from pyenv Python 3.13.2 with salt 3008.2, psycopg2-binary, requests and pytest. Never use the system python.
+- Use the project venv `.venv`, built from pyenv Python 3.13.2 with `pip install -r requirements.txt`. Never use the system python.
+- Format with Black: `.venv/bin/black --exclude '/(\.venv|\.git|dev/\.run)/' .`
 - pip's index is the Broadcom Artifactory, which needs the VPN.
 - Containers run under podman (no docker, and no compose provider installed).
 

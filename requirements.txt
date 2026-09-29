@@ -1,0 +1,10 @@
+# Local development and test environment (not needed on the salt-master,
+# which only needs psycopg2: `salt-pip install psycopg2-binary`).
+salt==3008.2
+psycopg2-binary==2.9.13
+requests==2.34.2
+PyYAML==6.0.3
+
+pytest==9.1.1
+pytest-cov==7.1.0
+black==26.5.1

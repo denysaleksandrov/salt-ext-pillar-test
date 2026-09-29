@@ -45,7 +45,9 @@ def serve():
 
 
 def test_deep_merge():
-    assert pillar_api.deep_merge({"a": {"b": 1, "c": [1]}}, {"a": {"c": [2]}, "d": 3}) == {
+    assert pillar_api.deep_merge(
+        {"a": {"b": 1, "c": [1]}}, {"a": {"c": [2]}, "d": 3}
+    ) == {
         "a": {"b": 1, "c": [2]},
         "d": 3,
     }
@@ -55,7 +57,10 @@ def test_dict_backend_merges_default(serve, data_file):
     base = serve(pillar_api.DictBackend(str(data_file)))
     resp = requests.get(f"{base}/pillar/minion1", timeout=5)
     assert resp.status_code == 200
-    assert resp.json() == {"dc": "ams1", "app": {"replicas": 2, "version": "1.4.2", "tags": ["b"]}}
+    assert resp.json() == {
+        "dc": "ams1",
+        "app": {"replicas": 2, "version": "1.4.2", "tags": ["b"]},
+    }
     # Unknown minions still get the defaults.
     assert requests.get(f"{base}/pillar/other", timeout=5).json() == DATA["default"]
 
@@ -122,14 +127,21 @@ def test_http_pillar_against_server(serve, data_file, tmp_path):
     http = load_module("http_pillar", {})
 
     ret = http.ext_pillar(
-        "minion1", {}, url=base + "/pillar/{minion_id}",
-        namespace="api", bearer_token_file=str(token_file),
+        "minion1",
+        {},
+        url=base + "/pillar/{minion_id}",
+        namespace="api",
+        bearer_token_file=str(token_file),
     )
     assert ret["api"]["app"]["version"] == "1.4.2"
 
     ret = http.ext_pillar(
-        "minion1", {}, url=base + "/lookup", method="POST",
-        json_body={"id": "{minion_id}"}, bearer_token_file=str(token_file),
+        "minion1",
+        {},
+        url=base + "/lookup",
+        method="POST",
+        json_body={"id": "{minion_id}"},
+        bearer_token_file=str(token_file),
     )
     assert ret["dc"] == "ams1"
 
@@ -153,7 +165,10 @@ def make_pg_backend(rows=None, error=None):
 def test_postgres_backend_merges_rows():
     rows = [({"dc": "ams1", "app": {"replicas": 2}},), ('{"app": {"version": "1"}}',)]
     backend, pool, cursor = make_pg_backend(rows)
-    assert backend.get("minion1") == {"dc": "ams1", "app": {"replicas": 2, "version": "1"}}
+    assert backend.get("minion1") == {
+        "dc": "ams1",
+        "app": {"replicas": 2, "version": "1"},
+    }
     query, params = cursor.execute.call_args.args
     assert params == {"default": "default", "minion_id": "minion1"}
     assert "minion1" not in query

@@ -17,7 +17,7 @@ This repo holds custom Salt external pillar modules that read pillar data from P
 
 - Unit tests: `.venv/bin/pytest -q tests`
 - Single test: `.venv/bin/pytest -q tests/test_pg_pillar.py::test_rows_merged_in_order`
-- Local Postgres: `dev/pg.sh up|seed|psql|down` (podman, 127.0.0.1:55432, loads `sql/`)
+- Local Postgres: `dev/pg.sh up|seed|psql|down` (podman, 127.0.0.1:55432, loads `sql/`). For a remote master use `PG_NETWORK=host PG_BIND=0.0.0.0 dev/pg.sh up`: on the user's RHEL 10 lab host, podman's bridge port forwarding drops external traffic.
 - Pillar API server: `PILLAR_API_TOKEN=devtoken .venv/bin/python api/pillar_api.py dict api/example_pillars.yaml` or `... postgres "<conninfo>"` (127.0.0.1:8088)
 - Masterless end-to-end: `dev/run-local.sh baseline|custom <minion_id>`. It generates a config under `dev/.run/` and runs `salt-call --local pillar.items`.
 - The user plans to validate against a real PG database and a real Salt environment. Don't start the podman or end-to-end flows unless asked.
